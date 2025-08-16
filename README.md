@@ -3,11 +3,10 @@
 A modern web-based Pokemon-inspired battle game built with TypeScript, Phaser 3, and WebSocket technology. Experience turn-based battles, Pokemon switching, and real-time multiplayer combat in your browser!
 
 ## 🎥 Game Preview
+<p align="center">
+  <img src="public/demo.gif" alt="Guardian Mon Demo" width="600"/>
+</p>
 
-<video controls width="600" poster="public/preview-thumbnail.png">
-  <source src="public/pokemon-legends.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
 
 *Experience epic Pokemon battles with smooth animations and responsive UI*
 
