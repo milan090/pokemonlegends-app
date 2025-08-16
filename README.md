@@ -4,7 +4,9 @@ A modern web-based Pokemon-inspired battle game built with TypeScript, Phaser 3,
 
 ## 🎥 Game Preview
 
-[Watch the game preview](public/pokemon-legends.mp4)
+<video src="public/pokemon-legends.mp4" controls width="600" poster="public/preview-thumbnail.png">
+  Your browser does not support the video tag.
+</video>
 
 *Experience epic Pokemon battles with smooth animations and responsive UI*
 
