@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianMon - Lobby Selection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 16px;
+            letter-spacing: 0.2px;
+        }
+        .container {
+            width: 80%;
+            max-width: 800px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-family: 'Inter', sans-serif;
+            color: #028af8;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            line-height: 1.4;
+            text-shadow: 1px 1px 0px #000;
+            padding: 10px;
+            font-weight: 700;
+        }
+        .lobbies-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .lobby-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #2a2a2a;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .lobby-item:hover {
+            background-color: #3a3a3a;
+        }
+        .lobby-name {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .lobby-players {
+            background-color: #028af8;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .refresh-btn {
+            background-color: #2a2a2a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: background-color 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+            font-weight: 600;
+        }
+        .refresh-btn:hover {
+            background-color: #3a3a3a;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #aaaaaa;
+            font-size: 16px;
+        }
+        .username-container {
+            margin-bottom: 20px;
+        }
+        .username-container input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #2a2a2a;
+            border-radius: 5px;
+            background-color: #2a2a2a;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.2px;
+        }
+        .username-container input:focus {
+            border-color: #028af8;
+            outline: none;
+        }
+        .username-container p {
+            margin-top: 5px;
+            color: #ff5555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .username-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #028af8;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GuardianMon - Select a Lobby</h1>
+        
+        <div class="username-container">
+            <label for="username-input">Username (required)</label>
+            <input type="text" id="username-input" placeholder="Enter your username..." required>
+            <p id="username-error" class="error-message"></p>
+        </div>
+        
+        <div class="lobbies-container" id="lobbies-list">
+            <div class="loading">Loading lobbies...</div>
+        </div>
+        
+        <button class="refresh-btn" id="refresh-btn">Refresh Lobbies</button>
+    </div>
+    <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
+
+    <script>
+        // Base URL for API calls
+        const API_BASE_URL = window.location.hostname === "localhost" ? "http://localhost:8080" : "https://api.pokemonlegends.xyz";
+        console.log(API_BASE_URL);  
+        
+        // Function to validate username
+        function validateUsername(username) {
+            if (!username) {
+                return "Username is required";
+            }
+            
+            if (username.length < 3) {
+                return "Username must be at least 3 characters";
+            }
+            
+            if (username.includes(" ")) {
+                return "Username cannot contain spaces";
+            }
+            
+            const regex = /^[a-zA-Z0-9_]+$/;
+            if (!regex.test(username)) {
+                return "Username can only contain letters, numbers, and underscores";
+            }
+            
+            return null; // No error
+        }
+        
+        // Function to fetch and display lobbies
+        async function fetchLobbies() {
+            try {
+                const response = await fetch(API_BASE_URL + '/lobbies');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch lobbies');
+                }
+                
+                const lobbies = await response.json();
+                console.log(lobbies);
+                displayLobbies(lobbies);
+            } catch (error) {
+                console.error('Error fetching lobbies:', error);
+                const lobbiesList = document.getElementById('lobbies-list');
+                lobbiesList.innerHTML = `<div class="loading">Error loading lobbies. Please try again.</div>`;
+            }
+        }
+        
+        // Function to display lobbies
+        function displayLobbies(lobbies) {
+            const lobbiesList = document.getElementById('lobbies-list');
+            
+            if (lobbies.length === 0) {
+                lobbiesList.innerHTML = `<div class="loading">No lobbies found.</div>`;
+                return;
+            }
+            
+            lobbiesList.innerHTML = '';
+            
+            lobbies.forEach(lobby => {
+                const lobbyItem = document.createElement('div');
+                lobbyItem.className = 'lobby-item';
+                lobbyItem.innerHTML = `
+                    <span class="lobby-name">${lobby.lobby_id}</span>
+                    <span class="lobby-players">${lobby.players} players</span>
+                `;
+                
+                lobbyItem.addEventListener('click', () => {
+                    const username = document.getElementById('username-input').value.trim();
+                    const errorElement = document.getElementById('username-error');
+                    
+                    // Validate username
+                    const usernameError = validateUsername(username);
+                    if (usernameError) {
+                        errorElement.textContent = usernameError;
+                        return;
+                    }
+                    
+                    // Clear any previous errors
+                    errorElement.textContent = '';
+                    
+                    // Store username in localStorage
+                    localStorage.setItem('username', username);
+                    
+                    window.location.href = `/game?lobby=${lobby.lobby_id}`;
+                });
+                
+                lobbiesList.appendChild(lobbyItem);
+            });
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load any saved username
+            const savedUsername = localStorage.getItem('username');
+            if (savedUsername) {
+                document.getElementById('username-input').value = savedUsername;
+            }
+            
+            fetchLobbies();
+            
+            document.getElementById('refresh-btn').addEventListener('click', fetchLobbies);
+            
+            // Add validation on username blur
+            document.getElementById('username-input').addEventListener('blur', () => {
+                const username = document.getElementById('username-input').value.trim();
+                const errorElement = document.getElementById('username-error');
+                
+                if (username) {
+                    const usernameError = validateUsername(username);
+                    errorElement.textContent = usernameError || '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

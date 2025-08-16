@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianMon - Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="public/style.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            height: 100%;
+            /* Prevent scrolling/bouncing on mobile browsers */
+            position: fixed;
+            touch-action: none;
+        }
+        
+        /* Layout container for game and UI areas */
+        .game-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Control panels on the sides */
+        .control-panel {
+            flex: 1 1 150px;
+            min-width: 150px;
+            max-width: 250px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 10;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Adjust for mobile */
+        @media (max-width: 768px) {
+            .control-panel {
+                min-width: 100px;
+            }
+        }
+        
+        /* Mobile responsiveness - hide panels on small screens */
+        @media (max-width: 640px), (orientation: landscape) and (max-height: 500px) {
+            .control-panel.mobile-hidden {
+                display: none;
+            }
+            
+            #game-container {
+                flex: 1;
+                width: 100%;
+            }
+        }
+        
+        /* Mobile controls */
+        .mobile-controls {
+            position: absolute;
+            z-index: 100;
+            display: none; /* Hidden by default */
+            /* Prevent touch events from being captured by scroll/zoom */
+            touch-action: none;
+            /* Prevent selection */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .mobile-controls.visible {
+            display: block;
+        }
+        
+        /* WASD controls on left */
+        .wasd-controls {
+            left: 20px;
+            bottom: 20px;
+            width: 180px;
+            height: 180px;
+        }
+        
+        /* Interaction button on right */
+        .interact-control {
+            right: 150px;
+            bottom: 150px;
+        }
+        
+        /* Individual control button */
+        .control-btn {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            font-size: 20px;
+        }
+        
+        /* Pressed state for buttons */
+        .control-btn.pressed {
+            background-color: rgba(255, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+        
+        /* WASD Button Positions */
+        .btn-w {
+            left: 60px;
+            top: 0;
+        }
+        
+        .btn-a {
+            left: 0;
+            top: 60px;
+        }
+        
+        .btn-s {
+            left: 60px;
+            top: 60px;
+        }
+        
+        .btn-d {
+            left: 120px;
+            top: 60px;
+        }
+        
+        /* Interaction button */
+        .btn-interact {
+            width: 80px;
+            height: 80px;
+            border-radius: 40px;
+            background-color: rgba(0, 150, 255, 0.4);
+            border-color: rgba(0, 150, 255, 0.6);
+            font-size: 22px;
+        }
+        
+        .left-panel {
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .right-panel {
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+        }
+        
+        #game-container {
+            flex: 2 1 300px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        /* Override any canvas styling to ensure proper centering */
+        canvas {
+            display: block;
+            margin: 0 auto;
+            max-height: 100%;
+        }
+        
+        /* Panel title */
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Panel info items */
+        .panel-info {
+            color: #ddd;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        #lobby-info {
+            color: #99ccff;
+            font-weight: 600;
+        }
+        
+        #back-button {
+            margin-top: auto;
+            background-color: #028af8;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        #back-button:hover {
+            background-color: #0279d8;
+        }
+        
+        /* Pokemon list styling */
+        .pokemon-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+            overflow-y: auto;
+            max-height: calc(100% - 100px);
+        }
+        
+        .pokemon-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .pokemon-card:hover {
+            background-color: rgba(0, 50, 100, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Rotate screen overlay */
+        #rotate-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+        
+        #rotate-overlay.visible {
+            display: flex;
+        }
+        
+        #rotate-icon {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            animation: rotate 2s infinite ease-in-out;
+        }
+        
+        #rotate-message {
+            font-size: 20px;
+            font-weight: bold;
+            max-width: 90%;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(90deg); }
+            75% { transform: rotate(0deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        /* Mobile mute button */
+        #mobile-mute-button {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+        }
+        
+        #mobile-mute-button.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #mobile-mute-button:active {
+            transform: scale(0.95);
+        }
+        
+        #mobile-mute-button svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Rotate screen overlay for mobile portrait mode -->
+    <div id="rotate-overlay">
+        <svg id="rotate-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" transform="rotate(90 12 12)"/>
+            <path d="M9.5 12h5M12 9.5v5"/>
+            <path d="M17 2.5v4a.5.5 0 0 0 .5.5h4"/>
+        </svg>
+        <div id="rotate-message">Please rotate your device to landscape mode for the best experience</div>
+    </div>
+
+    <!-- Mobile mute button -->
+    <div id="mobile-mute-button">
+        <svg id="sound-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path id="sound-waves" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div class="mobile-controls wasd-controls" id="wasd-controls">
+        <div class="control-btn btn-w" id="btn-w">W</div>
+        <div class="control-btn btn-a" id="btn-a">A</div>
+        <div class="control-btn btn-s" id="btn-s">S</div>
+        <div class="control-btn btn-d" id="btn-d">D</div>
+    </div>
+
+    <div class="mobile-controls interact-control" id="interact-control">
+        <div class="control-btn btn-interact" id="btn-interact">F</div>
+    </div>
+
+    <div class="game-layout">
+        <!-- Left UI Panel -->
+        <div class="control-panel left-panel mobile-hidden">
+            <div class="panel-title">Game Controls</div>
+            <div class="panel-info">
+                Lobby: <span id="lobby-info">Connecting...</span>
+            </div>
+            <button id="back-button" onclick="window.location.href='/'">← Back to Lobbies</button>
+        </div>
+        
+        <!-- Game Container -->
+        <div id="game-container"></div>
+        
+        <!-- Right UI Panel -->
+        <div class="control-panel right-panel mobile-hidden">
+            <div class="panel-title">Your Pokemon</div>
+            <div class="panel-info">
+                Your Pokemon will appear here.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get the lobby ID from the query params
+        const urlParams = new URLSearchParams(window.location.search);
+        const lobbyId = urlParams.get('lobby') || 'default';
+        
+        // Update the lobby info element
+        document.getElementById('lobby-info').textContent = lobbyId;
+        
+        // Store the lobby ID in localStorage so the game can access it
+        localStorage.setItem('currentLobbyId', lobbyId);
+        
+        // Mobile detection function
+        function isMobileDevice() {
+            return (
+                // Check for common mobile user agents
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                // Check for touch capabilities
+                ('ontouchstart' in window) ||
+                // Check for screen dimensions typical for mobile devices (either width or height is small)
+                (window.innerWidth <= 800 || window.innerHeight <= 600)
+            );
+        }
+        
+        // Apply mobile classes based on device detection
+        function applyMobileClasses() {
+            const isMobile = isMobileDevice();
+            const controlPanels = document.querySelectorAll('.control-panel');
+            
+            controlPanels.forEach(panel => {
+                if (isMobile) {
+                    panel.classList.add('mobile-hidden');
+                } else {
+                    panel.classList.remove('mobile-hidden');
+                }
+            });
+            
+            // Show/hide mobile controls
+            const mobileControls = document.querySelectorAll('.mobile-controls');
+            mobileControls.forEach(control => {
+                if (isMobile) {
+                    control.classList.add('visible');
+                } else {
+                    control.classList.remove('visible');
+                }
+            });
+        }
+        
+        // Run on load and resize
+        window.addEventListener('DOMContentLoaded', applyMobileClasses);
+        window.addEventListener('resize', applyMobileClasses);
+        
+        // Add event listener to detect high-DPI displays for better rendering
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.devicePixelRatio > 1) {
+                document.body.classList.add('high-dpi');
+            }
+        });
+        
+        // Handle orientation changes and show/hide overlay
+        function checkOrientation() {
+            const rotateOverlay = document.getElementById('rotate-overlay');
+            
+            // Only show overlay if it's a mobile device in portrait mode
+            if (isMobileDevice() && window.innerHeight > window.innerWidth) {
+                rotateOverlay.classList.add('visible');
+            } else {
+                rotateOverlay.classList.remove('visible');
+            }
+        }
+        
+        // Check orientation on load and when orientation changes
+        window.addEventListener('DOMContentLoaded', checkOrientation);
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        
+        // Mobile mute button functionality
+        const mobileMuteButton = document.getElementById('mobile-mute-button');
+        const soundIcon = document.getElementById('sound-icon');
+        const soundWaves = document.getElementById('sound-waves');
+        let isMuted = false;
+        
+        // Show mute button only on mobile
+        function toggleMuteButtonVisibility() {
+            if (isMobileDevice()) {
+                mobileMuteButton.classList.add('visible');
+            } else {
+                mobileMuteButton.classList.remove('visible');
+            }
+        }
+        
+        // Toggle mute state when button is clicked
+        mobileMuteButton.addEventListener('click', function() {
+            isMuted = !isMuted;
+            
+            if (isMuted) {
+                // Show muted state
+                soundWaves.style.display = 'none';
+                // Also mute the game
+                window.gameAudioMuted = true;
+            } else {
+                // Show unmuted state
+                soundWaves.style.display = 'block';
+                // Unmute the game
+                window.gameAudioMuted = false;
+            }
+            
+            // Call the game's audio toggle function if the game is loaded
+            if (window.toggleGameAudio) {
+                window.toggleGameAudio(isMuted);
+            }
+        });
+        
+        // Initialize the mute button visibility
+        window.addEventListener('DOMContentLoaded', toggleMuteButtonVisibility);
+        window.addEventListener('resize', toggleMuteButtonVisibility);
+        
+        // Mobile control state
+        window.mobileControls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            interact: false
+        };
+        
+        // Setup mobile control event listeners
+        window.addEventListener('DOMContentLoaded', function() {
+            const buttons = {
+                'btn-w': 'up',
+                'btn-a': 'left',
+                'btn-s': 'down',
+                'btn-d': 'right',
+                'btn-interact': 'interact'
+            };
+            
+            // Helper function for handling button events
+            function setupButtonEvents(buttonId, controlName) {
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+                
+                // Touch start / mouse down
+                function handleStart(e) {
+                    e.preventDefault();
+                    window.mobileControls[controlName] = true;
+                    button.classList.add('pressed');
+                }
+                
+                // Touch end / mouse up
+                function handleEnd(e) {
+                    e.preventDefault();
+                    window.mobileControls[controlName] = false;
+                    button.classList.remove('pressed');
+                }
+                
+                // Touch cancel / mouse leave
+                function handleCancel(e) {
+                    window.mobileControls[controlName] = false;
+                    button.classList.remove('pressed');
+                }
+                
+                // Add event listeners for both touch and mouse
+                button.addEventListener('touchstart', handleStart, false);
+                button.addEventListener('touchend', handleEnd, false);
+                button.addEventListener('touchcancel', handleCancel, false);
+                button.addEventListener('mousedown', handleStart, false);
+                button.addEventListener('mouseup', handleEnd, false);
+                button.addEventListener('mouseleave', handleCancel, false);
+            }
+            
+            // Setup all buttons
+            for (const [buttonId, controlName] of Object.entries(buttons)) {
+                setupButtonEvents(buttonId, controlName);
+            }
+            
+            // Special handling for interact button
+            const interactButton = document.getElementById('btn-interact');
+            if (interactButton) {
+                interactButton.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    // Set a flag for a single frame to trigger interaction
+                    window.mobileControls.interactTriggered = true;
+                    // Reset the flag after a short delay
+                    setTimeout(() => {
+                        window.mobileControls.interactTriggered = false;
+                    }, 100);
+                });
+                
+                interactButton.addEventListener('mouseup', function(e) {
+                    // Same as touchend
+                    window.mobileControls.interactTriggered = true;
+                    setTimeout(() => {
+                        window.mobileControls.interactTriggered = false;
+                    }, 100);
+                });
+            }
+        });
+    </script>
+    
+    <script type="module" src="/src/main.ts"></script>
+    
+    <script>
+        // Additional script to ensure canvas is properly sized inside the game container
+        window.addEventListener('load', function() {
+            // Force sizing of canvas after everything has loaded
+            setTimeout(function() {
+                const canvas = document.querySelector('canvas');
+                if (canvas) {
+                    // Make canvas fit inside the game container
+                    canvas.style.maxWidth = '100%';
+                    canvas.style.maxHeight = '100%';
+                    canvas.style.margin = 'auto';
+                }
+            }, 500); // Delay to ensure game has initialized
+        });
+    </script>
+</body>
+</html> 

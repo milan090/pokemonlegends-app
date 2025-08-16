@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/game", "destination": "/game.html" },
+    { "source": "/(.*)", "destination": "/$1" }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "github": {
+    "silent": true
+  }
+} 
