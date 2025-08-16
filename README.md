@@ -46,27 +46,22 @@ A modern web-based Pokemon-inspired battle game built with TypeScript, Phaser 3,
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn package manager
-- Modern web browser with WebSocket support
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd guardianmon
-   ```
+First, start the server: [milan090/pokemonlegends-backend](https://github.com/milan090/pokemonlegends-backend)
 
-2. **Install dependencies**
+1. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. **Start the development server**
+2. **Start the development server**
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
+3. **Open your browser**
    Navigate to `http://localhost:3000` to start playing!
 
 ## 🎮 How to Play
@@ -205,12 +200,6 @@ We welcome contributions! Please follow these guidelines:
 4. **Push to branch**: `git push origin feature/amazing-feature`
 5. **Open a Pull Request**
 
-### Development Guidelines
-- Follow TypeScript best practices
-- Write tests for new battle mechanics
-- Update documentation for API changes
-- Ensure cross-browser compatibility
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -222,13 +211,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **TypeScript Team**: Excellent typing system for large projects
 - **Contributors**: All developers who helped build this game
 
-## 📞 Support
-
-- **Issues**: Report bugs via GitHub Issues
-- **Discussions**: Join community discussions
-- **Documentation**: Check the wiki for detailed guides
-- **Discord**: Join our community server for real-time help
-
----
-
-**Ready to become a Pokemon Master? Start your journey now!** 🌟
